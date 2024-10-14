@@ -45,7 +45,7 @@ router.post("/items/create", upload.array("pictures", 10), async (req, res) => {
     }
 
     const role = decoded.role;
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -134,7 +134,7 @@ router.put("/items/edit", upload.array("pictures", 10), async (req, res) => {
     }
 
     const role = decoded.role;
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -256,7 +256,7 @@ router.delete("/items/delete", async (req, res) => {
     }
 
     const role = decoded.role;
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 

@@ -69,7 +69,7 @@ router.post("/token/validator", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "ADMIN") {
       return res.status(401).json({ error: "Unauthorized" });
     }
 

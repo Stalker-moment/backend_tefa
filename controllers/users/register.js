@@ -19,7 +19,7 @@ router.post("/register", async (req, res) => {
     const token = authorization.replace("Bearer ", "");
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "ADMIN") {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -31,7 +31,7 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Please fill all required fields" });
     }
 
-    if (role !== "admin" && role !== "user") {
+    if (role !== "ADMIN" && role !== "USER" && role !== "PPIC") {
       return res.status(400).json({ error: "Invalid role" });
     }
 

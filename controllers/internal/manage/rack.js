@@ -24,7 +24,7 @@ router.post("/rack/create", async (req, res) => {
 
     const role = decoded.role;
 
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -63,7 +63,7 @@ router.post("/rack/edit", async (req, res) => {
 
     const role = decoded.role;
 
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -132,7 +132,7 @@ router.post("/rack/delete", async (req, res) => {
 
     const role = decoded.role;
 
-    if (role !== "admin") {
+    if (role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 

@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id        String   @id @default(uuid()) // Using UUID for a standard GUID
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  contact   Contact?
+
+  RequestOrder RequestOrder?
+}
+
+model Contact {
+  id        String   @id @default(uuid()) // Assuming UUID for a unique identifier
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String
+  noReg     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  picture   String   @default("/default.png")
+  account   Account  @relation(fields: [id], references: [id])
+}
+
+model Rack {
+  id        String   @id @default(uuid())
+  name      String
+  subName   String
+  location  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Item      Item[]
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Item      Item[]
+}
+
+model Item {
+  id          Int       @id @default(autoincrement())
+  name        String
+  quantity    Int
+  type        String
+  description String?
+  visible     Boolean   @default(true)
+  price       Float
+  rack        Rack      @relation(fields: [rackId], references: [id])
+  rackId      String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  pictures    Picture[]
+
+  RequestOrderItem RequestOrderItem[]
+}
+
+model Picture {
+  id        String   @id @default(uuid()) // Use UUID for the ID
+  path      String
+  extension String   @default("jpg")
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId    Int
+  createdAt DateTime @default(now())
+}
+
+model RequestOrder {
+  id        String   @id // Set the same as userId
+  user      Account  @relation(fields: [id], references: [id]) // `id` will act as userId
+  items     RequestOrderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RequestOrderItem {
+  id             String        @id @default(uuid()) // UUID for each requested item
+  item           Item          @relation(fields: [itemId], references: [id])
+  itemId         Int
+  requestOrder   RequestOrder  @relation(fields: [requestOrderId], references: [id], onDelete: Cascade)
+  requestOrderId String
+  quantity       Int
+  status         RequestStatus @default(PENDING)
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED 
+  REJECTED
+}
+
+enum Role {
+  USER
+  PPIC
+  ADMIN
+}

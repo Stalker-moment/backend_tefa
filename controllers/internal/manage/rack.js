@@ -45,7 +45,7 @@ router.post("/rack/create", async (req, res) => {
   }
 });
 
-router.post("/rack/edit", async (req, res) => {
+router.put("/rack/edit", async (req, res) => {
   const { id, name, subName, location } = req.body;
   const { authorization } = req.headers;
 
@@ -114,7 +114,7 @@ router.post("/rack/edit", async (req, res) => {
   }
 });
 
-router.post("/rack/delete", async (req, res) => {
+router.delete("/rack/delete", async (req, res) => {
   const { id } = req.body;
   const { authorization } = req.headers;
 

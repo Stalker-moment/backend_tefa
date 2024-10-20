@@ -25,12 +25,18 @@ const internalData = require("./controllers/internal/data");
 const filesAssets = require("./controllers/files/assets");
 const filesProfile = require("./controllers/files/profile");
 const filesItems = require("./controllers/files/items");
+const filesCover = require("./controllers/files/cover");
 
 const ordersRequest = require("./controllers/internal/order/request");
 const ordersAccumulation = require("./controllers/internal/order/accumulation");
 
+// Load WebSocket handlers
+const handleDataItemsSocket = require("./sockets/dataItems");
+const handleDataRackSocket = require("./sockets/dataRack");
+const handleDataCategorySocket = require("./sockets/dataCategory");
+
 // Load Functions
-const sendData = require("./functions/sendData");
+const sendDataItems = require("./functions/sendDataItems");
 
 //-----------------Configuration------------------//
 app.use(bodyParser.json());
@@ -70,96 +76,28 @@ app.use("/api/internal/order", ordersAccumulation);
 app.use("/files", filesAssets);
 app.use("/files", filesProfile);
 app.use("/files", filesItems);
+app.use("/files", filesCover);
 
 //handler if route not found
 app.use((req, res) => {
   res.status(404).send({ error: "Not found" });
 });
 
+// Setup WebSocket server
 const server = http.createServer(app);
-
 const wss = new WebSocket.Server({ server });
 
 // Setup WebSocket connections
-wss.on("connection", async (ws, req) => {
-  console.log(`WebSocket client connected from ${req.url}`);
-  
-  // Extract token from URL query (e.g., ws://localhost:8080/data?token=<JWT>)
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const token = url.searchParams.get("token");
-
-  if (!token) {
-    ws.send(JSON.stringify({ error: "Token is required" }));
-    ws.close();
-    return;
-  }
-
-  // Verify the token
-  try {
-    const decoded = verify(token, process.env.JWT_SECRET);
-
-    // Optionally, you can check the decoded token's content (e.g., roles, permissions, etc.)
-    console.log("Token is valid, decoded:", decoded);
-
-  } catch (err) {
-    ws.send(JSON.stringify({ error: "Invalid or expired token" }));
-    ws.close();
-    return;
-  }
-
-  // Check for valid request endpoint
-  const requestArray = ["/data"];
-  if (!requestArray.some((endpoint) => req.url.startsWith(endpoint))) {
+wss.on("connection", (ws, req) => {
+  if (req.url.startsWith("/data-items")) {
+    handleDataItemsSocket(ws, req);
+  } else if (req.url.startsWith("/data-rack")) {
+    handleDataRackSocket(ws, req);
+  } else if (req.url.startsWith("/data-category")) {
+    handleDataCategorySocket(ws, req);
+  } else {
     ws.send(JSON.stringify({ error: "Invalid request URL" }));
     ws.close();
-    return;
-  }
-
-  if (req.url.startsWith("/data")) {
-    const dateParam = url.searchParams.get("date");
-    let filterDate = null;
-
-    // Validate and parse the date
-    if (dateParam) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (dateRegex.test(dateParam)) {
-        const [year, month, day] = dateParam.split("-").map(Number);
-        filterDate = new Date(year, month - 1, day);
-      } else {
-        ws.send(
-          JSON.stringify({ error: "Invalid date format. Use YYYY-MM-DD." })
-        );
-        ws.close();
-        return;
-      }
-    } else {
-      const today = new Date();
-      filterDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
-    }
-
-    // Send the initial data
-    let data = await sendData(filterDate);
-    data = JSON.stringify(data);
-    ws.send(data);
-
-    // Send the data if there is a new log entry
-    const intervalId = setInterval(async () => {
-      let newData = await sendData(filterDate);
-
-      if (JSON.stringify(newData) !== data) {
-        data = JSON.stringify(newData);
-        ws.send(data);
-      }
-    }, 1000);
-
-    ws.on("close", () => {
-      console.log("WebSocket client disconnected from /data");
-      clearInterval(intervalId);
-    });
   }
 });
 

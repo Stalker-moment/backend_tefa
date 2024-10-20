@@ -122,6 +122,17 @@ router.delete("/category/delete", async (req, res) => {
       where: { id: id },
     });
 
+    //if category has items, return error
+    const items = await prisma.item.findMany({
+      where: { categoryId: id },
+    });
+
+    if (items.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "Category has items, cannot delete" });
+    }
+
     if (!categoryExist) {
       return res.status(404).json({ error: "Category not found" });
     }

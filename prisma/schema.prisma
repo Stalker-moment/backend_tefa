@@ -70,6 +70,8 @@ model Item {
   category    Category  @relation(fields: [categoryId], references: [id])
   categoryId  String
   pictures    Picture[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   RequestOrderItem RequestOrderItem[]
 }
@@ -99,12 +101,16 @@ model RequestOrderItem {
   requestOrderId String
   quantity       Int
   status         RequestStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 enum RequestStatus {
+  DEMAND
   PENDING
   APPROVED 
   REJECTED
+  CANCELED
 }
 
 enum Role {

@@ -262,7 +262,22 @@ router.delete("/items/delete", async (req, res) => {
 
     const itemExist = await prisma.item.findFirst({
       where: { id: parseInt(id) },
+      include: { pictures: true },
     });
+
+    //delete pictures from folder
+    if (itemExist.pictures.length > 0) {
+      itemExist.pictures.forEach((picture) => {
+        const picturePath = path.join(
+          __dirname,
+          "../../../img/items",
+          `${picture.id}.${picture.extension}`
+        );
+        if (fs.existsSync(picturePath)) {
+          fs.unlinkSync(picturePath);
+        }
+      });
+    } 
 
     if (!itemExist) {
       return res.status(404).json({ error: "Item not found" });

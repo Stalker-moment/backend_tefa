@@ -201,4 +201,71 @@ router.delete("/delete", async (req, res) => {
   }
 });
 
+router.post("/checkout", async (req, res) => {
+  const { authorization } = req.headers;
+
+  if (!authorization) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const token = authorization.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.exp * 1000 < Date.now()) {
+      return res.status(401).json({ error: "Token expired" });
+    }
+
+    const userId = decoded.id;
+
+    const requestOrder = await prisma.requestOrder.findFirst({
+      where: { id: userId },
+      include: { items: true },
+    });
+
+    if (!requestOrder) {
+      return res.status(404).json({ error: "Cart is empty" });
+    }
+
+    if (requestOrder.items.length === 0) {
+      return res.status(404).json({ error: "Cart is empty" });
+    }
+
+    const orderItems = requestOrder.items;
+
+    // Create a new order
+    const newOrder = await prisma.order.create({
+      data: {
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        items: {
+          create: orderItems.map((item) => ({
+            item: {
+              connect: {
+                id: item.itemId,
+              },
+            },
+            quantity: item.quantity,
+          })),
+        },
+      },
+    });
+
+    // Delete the request order
+    await prisma.requestOrderItem.deleteMany({
+      where: { requestOrderId: userId },
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Order placed successfully", data: newOrder });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

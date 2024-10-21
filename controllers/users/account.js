@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const dotenv = require("dotenv");
 dotenv.config();
 
-router.post("/account", async (req, res) => {
+router.post("/account/all", async (req, res) => {
   const { authorization } = req.headers;
 
   try {
@@ -48,6 +48,52 @@ router.post("/account", async (req, res) => {
     });
 
     return res.status(200).json(accounts);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.post("/account", async (req, res) => {
+  const {authorization} = req.headers;
+
+  try {
+    //check account details by token
+    if (!authorization) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const token = authorization.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.expired < Date.now()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    //get account details by id
+    const account = await prisma.account.findUnique({
+      where: {
+        id: decoded.id,
+      },
+      include: {
+        contact: true,
+      },
+    });''
+
+    if (!account) {
+      return res.status(404).json({ error: "Account not found" });
+    }
+
+    //delete password field
+    delete account.password;
+
+    //picture format
+    account.contact.picture = account.contact.picture
+      ? `${process.env.HOST}/files/img/profile${account.contact.picture}`
+      : null;
+
+    //return account details
+    return res.status(200).json(account);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: "Internal Server Error" });

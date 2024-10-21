@@ -24,6 +24,8 @@ model Account {
   contact   Contact?
 
   RequestOrder RequestOrder?
+
+  order order[]
 }
 
 model Contact {
@@ -74,6 +76,8 @@ model Item {
   updatedAt   DateTime  @updatedAt
 
   RequestOrderItem RequestOrderItem[]
+
+  orderItem orderItem[]
 }
 
 model Picture {
@@ -100,9 +104,29 @@ model RequestOrderItem {
   requestOrder   RequestOrder  @relation(fields: [requestOrderId], references: [id], onDelete: Cascade)
   requestOrderId String
   quantity       Int
-  status         RequestStatus @default(PENDING)
+  status         RequestStatus @default(DEMAND)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+}
+
+model order {
+  id        String   @id @default(uuid())
+  user      Account  @relation(fields: [id], references: [id])
+  items     orderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model orderItem {
+  id        String  @id @default(uuid())
+  item      Item    @relation(fields: [itemId], references: [id])
+  itemId    Int
+  order     order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  quantity  Int
+  status   RequestStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum RequestStatus {

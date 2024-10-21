@@ -34,6 +34,7 @@ const ordersAccumulation = require("./controllers/internal/order/accumulation");
 const handleDataItemsSocket = require("./sockets/dataItems");
 const handleDataRackSocket = require("./sockets/dataRack");
 const handleDataCategorySocket = require("./sockets/dataCategory");
+const handleDataAccountsSocket = require("./sockets/dataAccounts");
 
 // Load Functions
 const sendDataItems = require("./functions/sendDataItems");
@@ -95,6 +96,8 @@ wss.on("connection", (ws, req) => {
     handleDataRackSocket(ws, req);
   } else if (req.url.startsWith("/data-category")) {
     handleDataCategorySocket(ws, req);
+  } else if (req.url.startsWith("/accounts")) {
+    handleDataAccountsSocket(ws, req);
   } else {
     ws.send(JSON.stringify({ error: "Invalid request URL" }));
     ws.close();

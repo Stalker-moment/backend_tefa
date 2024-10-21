@@ -103,6 +103,10 @@ router.post("/edit", async (req, res) => {
       },
     });
 
+    updatedAccount2.contact.picture = account.contact.picture
+      ? `${process.env.HOST}/files/img/profile${account.contact.picture}`
+      : null;
+
     //make a new jwt token
     const expired = Date.now() + 60 * 60 * 60 * 1000; // 1 day
 
@@ -120,7 +124,7 @@ router.post("/edit", async (req, res) => {
       process.env.JWT_SECRET
     );
 
-    return res.status(200).json({ message: `Succes update account (${decoded.email})`, token: newToken });
+    return res.status(200).json({ message: `Succes update account (${decoded.email})`, token: newToken, data: updatedAccount2 });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal server error" });
